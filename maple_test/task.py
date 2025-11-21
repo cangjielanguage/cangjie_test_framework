@@ -617,7 +617,7 @@ class SingleTask:
         self.condition = condition
         config = config.get_case_config(case)
         ensure_config_initialized()
-        base_path = Path(__file__).resolve().parent.parent.parent / "testsuites"
+        base_path = Path(__file__).resolve().parent.parent.parent / "cangjie_test" / "testsuites" / "HLT"
         global OVERWRITE_FILE
         if running_config["directory_structure"] == "normal":
             self.temp_dir = "{}_{}".format(self.path.name.replace(".", "_"), int(time.time()))
