@@ -632,12 +632,10 @@ class SingleTask:
             if OVERWRITE_FILE:
                 OVERWRITE_FILE = False
         elif configs.get_val("compatible") and running_config.get("directory_list"):
-            for k, v in directory_dict.items():
-                if not os.path.exists(os.path.join(base_path, k)):
-                    continue
-                if os.path.samefile(os.path.join(base_path, k), case.path):
-                    self.temp_dir = v
-                    break
+            linux_path = Path(str(case.path)).as_posix()
+            result = linux_path.split("HLT")[-1].lstrip("/")
+            if directory_dict.get(result):
+                self.temp_dir = directory_dict.get(result)
         if running_config["directory_structure"] == "normal":
             self.work_dir = running_config["temp_dir"] / self.path.parent / self.temp_dir
             self.log_config = "{}_{}".format(self.name.replace(".", "_"), self.temp_dir.split("_")[-1])
