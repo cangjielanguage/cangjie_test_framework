@@ -569,8 +569,8 @@ class TestSuiteTask:
             for task in self.task_set[task_name]:
                 result = Result(
                     task.case_path,
-                    self.cfg_path.parent.name,
                     task_name,
+                    self.cfg_path,
                     task.result[0],
                     task.commands,
                     task.result[1],
