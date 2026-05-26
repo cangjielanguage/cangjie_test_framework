@@ -569,8 +569,8 @@ class TestSuiteTask:
             for task in self.task_set[task_name]:
                 result = Result(
                     task.case_path,
-                    self.cfg_path.parent.name,
                     task_name,
+                    self.cfg_path,
                     task.result[0],
                     task.commands,
                     task.result[1],
@@ -617,12 +617,14 @@ class SingleTask:
         self.condition = condition
         config = config.get_case_config(case)
         ensure_config_initialized()
-        base_path = Path(__file__).resolve().parent.parent.parent / "testsuites"
+        base_path = Path(__file__).resolve().parent.parent.parent / "cangjie_test" / "testsuites" / "HLT"
         global OVERWRITE_FILE
         if running_config["directory_structure"] == "normal":
             self.temp_dir = "{}_{}".format(self.path.name.replace(".", "_"), int(time.time()))
         elif running_config["directory_structure"] == "tile":
-            self.temp_dir = "{}_{}".format(self.path.name.replace(".", "_"), str(uuid.uuid1()).replace("-", ""))
+            mark =  str(uuid.uuid1()).replace("-", "")
+            mark = mark[:len(mark) // 2]
+            self.temp_dir = "{}_{}".format(self.path.name.replace(".", "_"), mark)
         if not configs.get_val("compatible") and running_config.get("directory_list"):
             file_mod = "w" if OVERWRITE_FILE else "a"
             with open(str(running_config["directory_list"]), file_mod) as f:
@@ -630,12 +632,10 @@ class SingleTask:
             if OVERWRITE_FILE:
                 OVERWRITE_FILE = False
         elif configs.get_val("compatible") and running_config.get("directory_list"):
-            for k, v in directory_dict.items():
-                if not os.path.exists(os.path.join(base_path, k)):
-                    continue
-                if os.path.samefile(os.path.join(base_path, k), case.path):
-                    self.temp_dir = v
-                    break
+            linux_path = Path(str(case.path)).as_posix()
+            result = linux_path.split("HLT")[-1].lstrip("/")
+            if directory_dict.get(result):
+                self.temp_dir = directory_dict.get(result)
         if running_config["directory_structure"] == "normal":
             self.work_dir = running_config["temp_dir"] / self.path.parent / self.temp_dir
             self.log_config = "{}_{}".format(self.name.replace(".", "_"), self.temp_dir.split("_")[-1])
