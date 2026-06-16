@@ -359,7 +359,7 @@ positional arguments:
 
 `cangjie_test/testsuites/HLT/compiler/cjnative/Chir/ForIn/for_in_01.cj`
 
-```cj
+```cangjie
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
  * This source file is part of the Cangjie project, licensed under Apache-2.0
@@ -396,7 +396,7 @@ main() {
 
 #### Test-Case Code Section
 
-```cj
+```cangjie
 func test() {
     var a = "HELLO"
     var b: UInt8 = 0
@@ -421,7 +421,7 @@ main() {
 
 #### Test-Case Execution Section
 
-```cj
+```cangjie
 // EXEC: %compiler %cmp_opt %f -o %output
 // RUN-EXEC: %run %run_opt %output %run_args
 ```
@@ -431,3 +431,347 @@ Two execution statements:
 1. EXEC statement: uses `%compiler` with `%cmp_opt` to compile the test case `%f` into `%output`.
 2. RUN-EXEC statement: runs the compiled output `%output`.
 
+## Detailed Usage of ASSERT
+
+`compare.py` is a built-in tool of the testing framework used to verify program output. It parses `// ASSERT:` comment lines in specified files to perform string or regular expression matching against the program's output. The basic syntax of ASSERT is as follows:
+
+```cangjie
+// ASSERT: <mode_type>[-keyword] <match_content>
+```
+
+The three components are:
+
+- Mode Type: scan or regex, indicating string matching or regular expression matching respectively.
+- Keyword: Optional, used to further specify the matching behavior.
+- Match Content: The string or regular expression to match against.
+
+For example, all of the following assertions will succeed:
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Starting test
+// ASSERT: scan-next Step 1
+// ASSERT: scan-after OK
+// ASSERT: scan-next Step 2
+// ASSERT: scan-3 OK
+// ASSERT: regex-not (fail|error)
+// ASSERT: scan-begin All checks
+// ASSERT: scan-after passed
+// ASSERT: scan-end
+
+main(): Unit {
+    println("Starting test")
+    println("Step 1")
+    println("OK")
+    println("Step 2")
+    println("OK")
+    println("Final OK")
+    println("Test completed successfully")
+    println("All checks passed")
+}
+```
+
+The table below lists all supported mode types and keyword combinations. Some keywords can be combined:
+
+| Method | Description |
+| ------ | ----------- |
+| `scan` | Checks if the output contains the specified string. |
+| `scan-not` | Checks if the output does NOT contain the specified string. |
+| `scan-full` | Checks if the output exactly matches the specified string. |
+| `scan-begin` | Same as `scan`, but resets the search start position for subsequent `scan-next` and `scan-after` calls. |
+| `scan-next` | Searches on the line immediately following the position of the last successful `scan-begin` match. |
+| `scan-after` | Searches starting from the character immediately after the position of the last successful `scan-begin` match. |
+| `scan-end` | Checks if the current search start position has reached the end of the output. |
+| `scan-N` | Checks if the specified string appears exactly `N` times in the output. |
+| `regex` | Checks if the specified regular expression successfully matches the output. |
+| `regex-not` | Checks if the specified regular expression does NOT successfully match the output. |
+| `regex-auto` | Same as `regex`, but simplifies the handling of whitespace in the specified regular expression. |
+| `regex-N` | Checks if the specified regular expression successfully matches exactly `N` times in the output. |
+
+### Scan Mode
+
+#### `scan`
+
+Always searches from the beginning of the output to check if the output contains the specified string.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan World
+
+main(): Unit {
+    println("Hello World, My Friend!")
+}
+```
+
+The above test case will succeed because the string `"World"` exists in the output.
+
+#### `scan-not`
+
+Always searches from the beginning of the output to check if the output does NOT contain the specified string.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-not Bad
+
+main(): Unit {
+    println("Hello World, My Friend!")
+}
+```
+
+The above test case will succeed because the string `"Bad"` does not exist in the output.
+
+#### `scan-full`
+
+Checks if the output exactly matches the specified string. Note that escape characters are supported in the string.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-full Hello World\nAnd Have A Good Day\n
+
+main(): Unit {
+    println("Hello World")
+    println("And Have A Good Day")
+}
+```
+
+The above test case will succeed because the output exactly matches `"Hello World\nAnd Have A Good Day\n"`.
+
+#### `scan-begin`
+
+Matches and sets the search start position. Its matching capability is the same as `scan`, but upon a successful match, it sets the search start position for the next match. It should be used in conjunction with `scan-next`, `scan-after`, and `scan-end`.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Hello
+// ASSERT: scan-after World
+// ASSERT: scan-next EveryOne
+// ASSERT: scan-begin End
+// ASSERT: scan-next
+// ASSERT: scan-end
+
+main(): Unit {
+    println("First Of All,")
+    println("HelloWorld")
+    println("EveryOne")
+    println("End")
+}
+```
+
+All assertions in the above test case will succeed. `scan-begin Hello` searches from the beginning of the output and matches `"Hello"` on the second line. This sets the search start position for the next match to the first character after `"Hello"`, which is `"W"`. The subsequent `scan-after World` then matches successfully. After `scan-begin End` matches successfully, it again sets the search start position for the next match to the character after `"End"`, which is the newline character. The subsequent `scan-next` starts searching from the next line, but since it matches an empty string, it also succeeds. Finally, `scan-end` successfully matches the end of the output.
+
+#### `scan-next`
+
+Matches on the line immediately following the current search start position (determined by the previous `scan-begin`).
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Hello
+// ASSERT: scan-next World
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("World")
+}
+```
+
+In the above test case, `scan-next World` will fail. Because after `scan-begin Hello` succeeds, the search start position for the next match is on the line containing `"Hello"`. `scan-next World` will only search on the next line, which is the line containing `"Goodbye"`, and thus will not find `"World"`, causing the assertion to fail.
+
+Modifying the above test case as follows will cause all assertions to succeed:
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Hello
+// ASSERT: scan-next Goodbye
+// ASSERT: scan-next World
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("World")
+}
+```
+
+#### `scan-after`
+
+Starts searching for a match from the current search start position (determined by the previous `scan-begin`).
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Goodbye
+// ASSERT: scan-after Hello
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("AndGoodNight")
+}
+```
+
+The above test case will fail. `scan-after Hello` will fail because after `scan-begin Goodbye` succeeds, `"Hello"` does not exist after the search start position.
+
+Modifying the above test case as follows will cause all assertions to succeed:
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Hello
+// ASSERT: scan-after Goodbye
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("AndGoodNight")
+}
+```
+
+Alternatively, changing `scan-after` to `scan` will also work:
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Goodbye
+// ASSERT: scan Hello
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("AndGoodNight")
+}
+```
+
+#### `scan-end`
+
+Checks if the current search start position has reached the end of the output. If it has reached the end, the assertion succeeds; otherwise, it fails.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Hello
+// ASSERT: scan-after Goodbye
+// ASSERT: scan-end
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("AndGoodNight")
+}
+```
+
+The above test case will fail. `scan-end` will fail because after `scan-after Goodbye` succeeds, the search start position has not yet reached the end of the output.
+
+Modifying the above test case as follows will cause it to succeed:
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-begin Hello
+// ASSERT: scan-after Goodbye
+// ASSERT: scan-after AndGoodNight
+// ASSERT: scan-end
+
+main(): Unit {
+    println("Hello")
+    println("Goodbye")
+    println("AndGoodNight")
+}
+```
+
+#### `scan-N`
+
+Exact count matching. Checks if the specified string appears exactly `N` times. The assertion fails if the number of occurrences is not equal to `N`.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: scan-3 Good
+
+main(): Unit {
+    println("GoodMorning")
+    println("Hello")
+    println("Goodbye")
+    println("AndGoodNight")
+}
+```
+
+The above test case will succeed because the string `"Good"` appears exactly 3 times.
+
+### regex Mode
+
+Regular expression matching.
+
+#### `regex`
+
+Basic regular expression matching. Checks if the output contains at least one match for the regular expression. Always attempts to match from the beginning of the output.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: regex My #\d+ Friend
+
+main(): Unit {
+    println("Hello World, My #100 Friend!")
+}
+```
+
+The above test case will succeed because the output contains `"My #100 Friend"`, which matches the regular expression.
+
+#### `regex-not`
+
+Negative regular expression matching. Checks if the output completely fails to match the specified regular expression. Always attempts to match from the beginning of the output.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: regex-not (Fail|Error|Warning)
+
+main(): Unit {
+    println("Success")
+}
+```
+
+The above test case will succeed because the output contains none of `"Fail"`, `"Error"`, or `"Warning"`.
+
+#### `regex-auto`
+
+Simplifies the handling of whitespace characters in user-written regular expressions, building upon standard regular expression matching.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: regex-auto Nice to  meet   you
+// ASSERT: regex Nice to  meet   you
+
+main(): Unit {
+    println("Nice   to  meet you~")
+}
+```
+
+In the above test case, `regex-auto` will succeed, while `regex` will fail. This is because `regex` performs matching strictly according to the given regular expression string (treating spaces literally), whereas `regex-auto` automatically replaces sequences of whitespace with `\s+`, allowing it to successfully match the output.
+
+#### `regex-N`
+
+Exact count regular expression matching. Checks if the specified regular expression successfully matches exactly `N` times. The assertion fails if the number of matches is not equal to `N`.
+
+```cangjie
+// EXEC: %compiler %cmp_opt %f -o %output
+// RUN-EXEC: %run %run_opt %output %run_args | compare %f
+// ASSERT: regex-10 My #\d+ Friend
+
+main(): Unit {
+    println("Nice to meet you~")
+    for (i in 0..10) {
+        println("Hello World, My #${i} Friend!")
+    }
+}
+```
+
+The above test case will succeed because the regular expression matches exactly 10 times.
