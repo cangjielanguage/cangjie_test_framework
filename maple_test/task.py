@@ -801,18 +801,27 @@ class SingleTask:
 
     @staticmethod
     def _form_line(line, config):
-        for key, value in config.get("internal_var").items():
-            end = 0
-            while end < len(line):
-                start = line.find("%{}".format(key), end)
-                if start == -1:
-                    break
-                end = len(key) + start + 1
-                if end == len(line):
-                    line = line[:start] + value + line[end:]
-                elif not line[end].isalnum() and line[end] != "_":
-                    line = line[:start] + value + line[end:]
-                end = len(value) + start + 1
+        internal_var = config.get("internal_var")
+        changed = True
+        max_iterations = 20  # safety limit to prevent infinite loops
+        iteration = 0
+        while changed and iteration < max_iterations:
+            changed = False
+            iteration += 1
+            for key, value in internal_var.items():
+                end = 0
+                while end < len(line):
+                    start = line.find("%{}".format(key), end)
+                    if start == -1:
+                        break
+                    end = len(key) + start + 1
+                    if end == len(line):
+                        line = line[:start] + value + line[end:]
+                        changed = True
+                    elif not line[end].isalnum() and line[end] != "_":
+                        line = line[:start] + value + line[end:]
+                        changed = True
+                    end = len(value) + start + 1
         return line
 
     def __repr__(self):
