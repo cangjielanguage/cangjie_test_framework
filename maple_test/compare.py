@@ -383,7 +383,7 @@ def scan_match(content, line_map, pattern, start=0, match_func=regex_match, coun
                      lambda x: (x.group(1) + r' ').encode("utf-8").decode("unicode_escape")[:-1], pattern)
     if count == -1:
         if content.find(pattern) != -1:
-            end = content.find(pattern) + start
+            end = content.find(pattern) + len(pattern) + start
             line_num = text_index_to_line_num(line_map, end)
             return True, line_map[line_num] + 1
         return False, start
