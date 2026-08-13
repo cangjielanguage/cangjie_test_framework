@@ -212,7 +212,7 @@ cangjie_test/testsuites/HLT
 
 ### Test-Case Lists
 
-Each test lists within the test suite contains two sections:
+Each test list within the test suite contains two sections:
 
 ```ini
 [ALL-TEST-CASE]
@@ -317,7 +317,7 @@ This test framework supports conditional execution control of test cases based o
 
 The sources of runtime conditions are divided into two categories:
 
-1. The `[condition]` field in the cfg configuration file specified by `--test_cfg` option when running `main.py`, where multiple tags are separated by one or more consecutive whitespaces.
+1. The `[condition]` field in the cfg configuration file specified by the `--test_cfg` option when running `main.py`, where multiple tags are separated by one or more consecutive whitespaces.
 
 2. The tags specified by the `--condition` option when running main.py, where multiple tags are separated by commas.
 
@@ -347,7 +347,7 @@ positional arguments:
   --assert_flag ASSERT_FLAG
                         Test case assert flag, default ASSERT 
   --expected_flag EXPECTED_FLAG
-                        Test case expected flag for compile, default EXCEPTED
+                        Test case expected flag for compile, default EXPECTED
   --condition [CONDITION]
                         Compare condition for Keyword, default empty. 
   --compare_object [COMPARE_OBJECT]
