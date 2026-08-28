@@ -1,4 +1,4 @@
-# Maple Test Framework
+# Cangjie Test Framework
 
 This project's test framework is the open-source test framework for the OpenArkCompiler: https://gitee.com/openarkcompiler/OpenArkCompiler/tree/master/test
 
@@ -139,7 +139,7 @@ usage: main.py [-h] [--cfg CFG] [-j <num>] [--retry <num>] [--output <file>] [--
 options:
   -h, --help            show this help message and exit
 
-Test FrameWork arguments:
+Test Framework arguments:
   --cfg CFG             Test framework configuration file
   -j <num>              Run <num> cases in parallel
   --retry <num>         Re-run unsuccessful test cases
@@ -156,7 +156,7 @@ Test FrameWork arguments:
                         Input condition for run, default empty.
   --level [LEVEL]       Input level for run, default empty.
   -p {PASS,FAIL,XFAIL,XPASS,UNSUPPORTED,UNRESOLVED}
-                        Print test cases with specified results, -pPASS -pFAIL, to print all test case that failed or passed, UNRESOLVED test case results are not displayed by default.
+                        Print test cases with specified results, -pPASS -pFAIL, to print all test cases that failed or passed, UNRESOLVED test case results are not displayed by default.
   --progress {silent,normal,no_flush_progress}
                         set progress type, silent: Don't show progress, normal: one line progress bar, update per second,no_flush_progress: print test progress per 10 seconds
   --split SPLIT         Split cases into <num> testlist
@@ -212,7 +212,7 @@ cangjie_test/testsuites/HLT
 
 ### Test-Case Lists
 
-Each test lists within the test suite contains two sections:
+Each test list within the test suite contains two sections:
 
 ```ini
 [ALL-TEST-CASE]
