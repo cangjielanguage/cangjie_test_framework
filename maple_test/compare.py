@@ -416,7 +416,10 @@ def not_match(content, line_map, pattern, start=0, match_func=regex_match, count
 
 def next_match(content, line_map, pattern, start=0, match_func=regex_match, count=-1):
     line_num = text_index_to_line_num(line_map, start)
-    return match_func(content.splitlines()[line_num], line_map, pattern, start)
+    lines = content.splitlines()
+    if line_num >= len(lines):
+        return match_func("", line_map, pattern, start)
+    return match_func(lines[line_num], line_map, pattern, start)
 
 
 def after_match(content, line_map, pattern, start=0, match_func=regex_match, count=-1):
