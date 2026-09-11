@@ -317,7 +317,7 @@ This test framework supports conditional execution control of test cases based o
 
 The sources of runtime conditions are divided into two categories:
 
-1. The `[condition]` field in the cfg configuration file specified by `--test_cfg` option when running `main.py`, where multiple tags are separated by one or more consecutive whitespaces.
+1. The `[condition]` field in the cfg configuration file specified by the `--test_cfg` option when running `main.py`, where multiple tags are separated by one or more consecutive whitespaces.
 
 2. The tags specified by the `--condition` option when running main.py, where multiple tags are separated by commas.
 
